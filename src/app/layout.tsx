@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import Script from 'next/script'
 import './globals.css'
 import { siteConfig } from '@/config/site'
 import { ReactQueryProvider } from '@/providers/react-query-provider'
@@ -34,11 +33,6 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className={`${inter.className} min-h-screen bg-[#141414] text-white antialiased`}>
-        {/* Use Next.js Script component for better loading */}
-        <Script
-          src="https://cdn.tailwindcss.com"
-          strategy="beforeInteractive"
-        />
         <ReactQueryProvider>
           <RouteLoader />
           <div className="flex min-h-screen flex-col">
