@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import { siteConfig } from '@/config/site'
 import { ReactQueryProvider } from '@/providers/react-query-provider'
@@ -31,24 +32,13 @@ export default function RootLayout({
       <head>
         <meta name="referrer" content="no-referrer" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Regular script tag - remove strategy */}
-        <script 
-          src="https://cdn.tailwindcss.com" 
-          defer
-        />
-        <style>
-          {`
-            .bg-netflix-red { background-color: #E50914; }
-            .bg-netflix-red:hover { background-color: #F6121D; }
-            .text-netflix-red { color: #E50914; }
-            .border-netflix-red { border-color: #E50914; }
-            .bg-netflix-dark { background-color: #141414; }
-            .bg-netflix-darker { background-color: #0a0a0a; }
-            .text-netflix-gray { color: #808080; }
-          `}
-        </style>
       </head>
       <body className={`${inter.className} min-h-screen bg-[#141414] text-white antialiased`}>
+        {/* Use Next.js Script component for better loading */}
+        <Script
+          src="https://cdn.tailwindcss.com"
+          strategy="beforeInteractive"
+        />
         <ReactQueryProvider>
           <RouteLoader />
           <div className="flex min-h-screen flex-col">

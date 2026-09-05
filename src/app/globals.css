@@ -1,4 +1,8 @@
-/* Premium streaming platform theme */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Netflix-inspired theme */
 :root {
   --primary-red: #E50914;
   --primary-red-hover: #F6121D;
@@ -11,6 +15,7 @@
   --text-white: #ffffff;
   --card-bg: #1a1a1a;
 }
+
 
 * {
   margin: 0;

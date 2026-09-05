@@ -27,9 +27,6 @@ module.exports = {
           700: '#b91c1c',
         },
       },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-      },
     },
   },
   plugins: [],
