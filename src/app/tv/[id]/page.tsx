@@ -76,12 +76,12 @@ export default async function WatchTVPage({ params, searchParams }: WatchTVPageP
     }
 
     return (
-      <div className="min-h-screen bg-[#141414]">
+      <div className="min-h-screen bg-[#141414] bg-[radial-gradient(ellipse_at_top,_rgba(229,9,20,0.12),_transparent_42%)] pb-12">
         {/* Back button */}
         <div className="container-premium py-4">
           <Link
             href={`/watch/tv/${id}`}
-            className="inline-flex items-center gap-2 text-[#b3b3b3] hover:text-white transition"
+            className="inline-flex items-center gap-2 rounded-full bg-black/35 px-3 py-2 text-sm font-medium text-[#d2d2d2] backdrop-blur transition hover:bg-white/15 hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
             Back to Show
@@ -90,8 +90,8 @@ export default async function WatchTVPage({ params, searchParams }: WatchTVPageP
 
         {/* Episode Info Bar */}
         <div className="container-premium py-2">
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
-            <h1 className="text-lg md:text-xl font-bold text-white">{show.name}</h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-white/10 bg-[#1a1a1a]/75 px-4 py-3 shadow-2xl shadow-black/20 md:gap-x-4">
+            <h1 className="text-lg font-bold tracking-tight text-white md:text-2xl">{show.name}</h1>
             <span className="text-sm text-[#808080]">•</span>
             <span className="text-sm text-[#b3b3b3]">
               S{currentSeason} E{currentEpisode}
@@ -120,7 +120,7 @@ export default async function WatchTVPage({ params, searchParams }: WatchTVPageP
           <div className="flex items-center justify-between gap-4">
             <Link
               href={prevUrl}
-              className={`flex items-center gap-2 rounded bg-[#1a1a1a] px-4 py-2 text-sm text-[#b3b3b3] transition hover:bg-[#2a2a2a] hover:text-white ${
+              className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-[#d2d2d2] transition hover:bg-white/10 hover:text-white ${
                 !hasPrev && 'opacity-50 pointer-events-none'
               }`}
             >
@@ -137,7 +137,7 @@ export default async function WatchTVPage({ params, searchParams }: WatchTVPageP
             
             <Link
               href={nextUrl}
-              className={`flex items-center gap-2 rounded bg-[#1a1a1a] px-4 py-2 text-sm text-[#b3b3b3] transition hover:bg-[#2a2a2a] hover:text-white ${
+              className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-[#d2d2d2] transition hover:bg-white/10 hover:text-white ${
                 !hasNext && 'opacity-50 pointer-events-none'
               }`}
             >
@@ -151,7 +151,7 @@ export default async function WatchTVPage({ params, searchParams }: WatchTVPageP
         <div className="container-premium py-4 border-t border-white/5">
           <div className="flex flex-wrap items-center gap-4">
             {posterUrl && (
-              <div className="relative h-16 w-12 flex-shrink-0 overflow-hidden rounded">
+              <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-md shadow-lg">
                 <Image src={posterUrl} alt={show.name} fill className="object-cover" />
               </div>
             )}
@@ -177,13 +177,13 @@ export default async function WatchTVPage({ params, searchParams }: WatchTVPageP
 
         {/* Season selector */}
         <div className="container-premium pt-4">
-          <p className="mb-2 text-sm font-medium text-[#b3b3b3]">Season</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#b3b3b3]">Season</p>
+          <div className="flex gap-2 overflow-x-auto pb-2">
             {Array.from({ length: show.number_of_seasons }, (_, index) => index + 1).map((seasonNumber) => (
               <Link
                 key={seasonNumber}
                 href={getSeasonUrl(seasonNumber)}
-                className={`shrink-0 rounded px-3 py-2 text-sm font-medium transition ${
+                className={`shrink-0 rounded-md px-4 py-2 text-sm font-semibold transition ${
                   currentSeason === seasonNumber
                     ? 'bg-[#E50914] text-white'
                     : 'bg-[#1a1a1a] text-[#b3b3b3] hover:bg-[#2a2a2a] hover:text-white'
@@ -198,10 +198,10 @@ export default async function WatchTVPage({ params, searchParams }: WatchTVPageP
         {/* Quick Episode Selector - Small dropdown */}
         <div className="container-premium py-4">
           <details className="cursor-pointer">
-            <summary className="text-sm font-medium text-[#b3b3b3] hover:text-white transition">
+            <summary className="text-sm font-bold uppercase tracking-[0.12em] text-[#d2d2d2] transition hover:text-white">
               Jump to Episode ▼
             </summary>
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-60 overflow-y-auto p-2 bg-[#1a1a1a] rounded-lg">
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-72 overflow-y-auto rounded-lg bg-black/30 p-2">
               {seasonData.episodes.map((ep: any) => (
                 <Link
                   key={ep.id}
@@ -228,7 +228,7 @@ export default async function WatchTVPage({ params, searchParams }: WatchTVPageP
         <div className="container-premium py-4">
           <Link
             href={`/watch/tv/${id}`}
-            className="inline-flex items-center gap-2 text-[#b3b3b3] hover:text-white transition"
+            className="inline-flex items-center gap-2 rounded-full bg-black/35 px-3 py-2 text-sm font-medium text-[#d2d2d2] backdrop-blur transition hover:bg-white/15 hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
             Back to Show

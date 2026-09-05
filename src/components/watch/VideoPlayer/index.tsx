@@ -118,20 +118,20 @@ export function VideoPlayer({
   console.log('🎬 VideoPlayer Props:', { mediaType, tmdbId, season, episode })
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-3 ${className}`}>
       {/* Server Selector */}
-      <div className={`flex flex-wrap items-center gap-2 transition-all duration-500 ${
+      <div className={`flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-black/35 px-3 py-2 backdrop-blur transition-all duration-500 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}>
-        <span className="text-sm font-medium text-[#808080]">Source:</span>
+        <span className="mr-1 text-xs font-bold uppercase tracking-[0.16em] text-[#a3a3a3]">Source:</span>
         {Object.entries(servers).map(([key, server]) => (
           <button
             key={key}
             onClick={() => handleServerChange(key)}
-            className={`rounded px-3 py-1.5 text-xs font-medium transition-all duration-300 ${
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-300 ${
               server === currentServer
-                ? 'bg-[#E50914] text-white scale-105'
-                : 'bg-[#1a1a1a] text-[#b3b3b3] hover:bg-[#2a2a2a] hover:text-white hover:scale-105'
+                ? 'bg-[#E50914] text-white shadow-lg shadow-[#E50914]/30'
+                : 'bg-white/10 text-[#d2d2d2] hover:bg-white/20 hover:text-white'
             }`}
           >
             {server.name}
@@ -140,7 +140,7 @@ export function VideoPlayer({
       </div>
 
       {/* Video Player */}
-      <div className={`relative aspect-video w-full overflow-hidden rounded-lg bg-black transition-all duration-700 ${
+      <div className={`relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl shadow-black/50 transition-all duration-700 ${
         isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
       }`}>
         {isLoading && (
