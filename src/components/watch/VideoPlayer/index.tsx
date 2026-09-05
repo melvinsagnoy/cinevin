@@ -21,29 +21,52 @@ export function VideoPlayer({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [currentUrl, setCurrentUrl] = useState('')
   const [retryCount, setRetryCount] = useState(0)
 
+  // Generate URL based on props
+  const generateUrl = (serverKey: string) => {
+    const baseUrls: Record<string, string> = {
+      vidlink: `https://vidlink.pro/${mediaType}/${tmdbId}`,
+      vidsrcpro: `https://vidsrc.pro/embed/${mediaType}/${tmdbId}`,
+      superembed: `https://superembed.net/embed/${mediaType}/${tmdbId}`,
+      '2embed': `https://2embed.cc/embed/${mediaType}/${tmdbId}`,
+    }
+
+    let url = baseUrls[serverKey] || baseUrls.vidlink
+
+    // Add season and episode for TV shows
+    if (mediaType === 'tv' && season && episode) {
+      // For VidLink, format is /tv/id/season/episode
+      if (serverKey === 'vidlink') {
+        url = `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`
+      } else {
+        // For other servers, format is /embed/tv/id/season/episode
+        url = `${baseUrls[serverKey]}/${season}/${episode}`
+      }
+    }
+
+    console.log(`🎬 Video URL (${serverKey}):`, url)
+    return url
+  }
+
   const servers = {
-    vidlink: {
-      name: 'VidLink',
-      url: `https://vidlink.pro/${mediaType}/${tmdbId}${mediaType === 'tv' ? `/${season}/${episode}` : ''}`,
-    },
-    vidsrcpro: {
-      name: 'VidSrcPro',
-      url: `https://vidsrc.pro/embed/${mediaType}/${tmdbId}${mediaType === 'tv' ? `/${season}/${episode}` : ''}`,
-    },
-    superembed: {
-      name: 'SuperEmbed',
-      url: `https://superembed.net/embed/${mediaType}/${tmdbId}${mediaType === 'tv' ? `/${season}/${episode}` : ''}`,
-    },
-    '2embed': {
-      name: '2Embed',
-      url: `https://2embed.cc/embed/${mediaType}/${tmdbId}${mediaType === 'tv' ? `/${season}/${episode}` : ''}`,
-    },
+    vidlink: { name: 'VidLink' },
+    vidsrcpro: { name: 'VidSrcPro' },
+    superembed: { name: 'SuperEmbed' },
+    '2embed': { name: '2Embed' },
   }
 
   const currentServer = servers[server as keyof typeof servers] || servers.vidlink
+
+  // Update URL when episode or season changes
+  useEffect(() => {
+    const newUrl = generateUrl(server)
+    setCurrentUrl(newUrl)
+    setIsLoading(true)
+    setError(null)
+    setRetryCount(0)
+  }, [mediaType, tmdbId, season, episode, server])
 
   useEffect(() => {
     setIsVisible(true)
@@ -91,9 +114,12 @@ export function VideoPlayer({
     setError('Failed to load video. Trying another source...')
   }
 
+  // Debug: Log what's being passed to VideoPlayer
+  console.log('🎬 VideoPlayer Props:', { mediaType, tmdbId, season, episode })
+
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Server Selector with fade-in */}
+      {/* Server Selector */}
       <div className={`flex flex-wrap items-center gap-2 transition-all duration-500 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}>
@@ -113,7 +139,7 @@ export function VideoPlayer({
         ))}
       </div>
 
-      {/* Video Player with scale-in */}
+      {/* Video Player */}
       <div className={`relative aspect-video w-full overflow-hidden rounded-lg bg-black transition-all duration-700 ${
         isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
       }`}>
@@ -151,18 +177,20 @@ export function VideoPlayer({
             </button>
           </div>
         ) : (
-          <iframe
-            ref={iframeRef}
-            src={currentServer.url}
-            className="h-full w-full"
-            allowFullScreen
-            allow="encrypted-media; autoplay; fullscreen"
-            onLoad={handleIframeLoad}
-            onError={handleIframeError}
-            title={`${mediaType === 'movie' ? 'Movie' : 'TV Show'} player`}
-            loading="eager"
-            referrerPolicy="no-referrer"
-          />
+          currentUrl && (
+            <iframe
+              key={currentUrl}
+              src={currentUrl}
+              className="h-full w-full"
+              allowFullScreen
+              allow="encrypted-media; autoplay; fullscreen"
+              onLoad={handleIframeLoad}
+              onError={handleIframeError}
+              title={`${mediaType === 'movie' ? 'Movie' : 'TV Show'} player`}
+              loading="eager"
+              referrerPolicy="no-referrer"
+            />
+          )
         )}
       </div>
     </div>

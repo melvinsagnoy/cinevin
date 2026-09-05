@@ -51,6 +51,15 @@ export default async function TVDetailsPage({ params }: TVDetailsPageProps) {
       tmdbClient.getTVSimilar(id),
     ])
 
+    // Get first season details
+    const seasonNumber = 1
+    let seasonData = null
+    try {
+      seasonData = await tmdbClient.getTVSeason(id, seasonNumber)
+    } catch (error) {
+      console.error('Failed to fetch season:', error)
+    }
+
     const backdropUrl = getBackdropUrl(tv.backdrop_path)
     const posterUrl = getPosterUrl(tv.poster_path, 'large')
     const cast = credits.cast.slice(0, 10)
@@ -75,7 +84,7 @@ export default async function TVDetailsPage({ params }: TVDetailsPageProps) {
         </div>
 
         {/* Content */}
-        <div className="container-netflix -mt-32 pb-8">
+        <div className="container-premium -mt-32 pb-8">
           <div className="grid gap-8 md:grid-cols-[300px,1fr]">
             {/* Poster */}
             <div className="hidden md:block">
@@ -197,8 +206,68 @@ export default async function TVDetailsPage({ params }: TVDetailsPageProps) {
           </div>
         </div>
 
+        {/* Episodes Section */}
+        {seasonData && seasonData.episodes && seasonData.episodes.length > 0 && (
+          <div className="container-premium py-8">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Season {seasonNumber}
+            </h2>
+            <div className="space-y-3">
+              {seasonData.episodes.map((episode: any) => (
+                <div
+                  key={episode.id}
+                  className="flex items-start gap-4 rounded-lg bg-[#1a1a1a] p-4 transition-all duration-300 hover:bg-[#2a2a2a] hover:translate-x-1"
+                >
+                  {/* Episode Thumbnail */}
+                  <div className="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded bg-[#0a0a0a]">
+                    {episode.still_path ? (
+                      <Image
+                        src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
+                        alt={episode.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[#808080]">
+                        <svg className="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Episode Info */}
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-medium text-white">
+                          {episode.episode_number}. {episode.name}
+                        </h3>
+                        {episode.air_date && (
+                          <p className="text-sm text-[#808080]">{formatDate(episode.air_date)}</p>
+                        )}
+                      </div>
+                      <Link href={`/watch/tv/${tv.id}?season=${seasonNumber}&episode=${episode.episode_number}`}>
+                        <Button size="sm" className="bg-[#E50914] hover:bg-[#F6121D]">
+                          Watch
+                        </Button>
+                      </Link>
+                    </div>
+                    {episode.overview && (
+                      <p className="mt-2 text-sm text-[#b3b3b3] line-clamp-2">
+                        {truncateText(episode.overview, 120)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Similar Shows */}
         {similarItems.length > 0 && (
-          <div className="container-netflix pb-12">
+          <div className="container-premium pb-12">
             <MediaRow title="Similar Shows" items={similarItems} />
           </div>
         )}
