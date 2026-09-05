@@ -9,6 +9,7 @@ import { SearchBar } from '@/components/search/SearchBar'
 import { tmdbClient } from '@/lib/tmdb/client'
 import { convertToMediaItem } from '@/lib/utils/converters'
 import { MediaItem } from '@/types/media'
+import { TMDBMovie, TMDBTVShow } from '@/types/tmdb'
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
@@ -25,7 +26,7 @@ export default function SearchPage() {
   const tvShows: MediaItem[] = []
 
   if (data) {
-    data.results.forEach((item) => {
+    data.results.forEach((item: TMDBMovie | TMDBTVShow) => {
       const mediaItem = convertToMediaItem(item)
       if (mediaItem.mediaType === 'movie') {
         movies.push(mediaItem)
