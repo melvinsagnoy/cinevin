@@ -32,26 +32,27 @@ export function Navbar() {
       }`}
     >
       <div className="container-premium flex h-14 items-center justify-between px-4 md:h-16">
-        <div className="flex items-center gap-6 md:gap-10">
+        <div className="flex items-center gap-4 md:gap-8">
+          {/* Logo */}
           <Link 
             href="/" 
-            className="text-2xl font-bold transition-all duration-300 hover:scale-105 hover:opacity-80 md:text-3xl lg:text-4xl"
+            className="text-2xl font-bold transition-all duration-300 hover:scale-105 hover:opacity-80 md:text-3xl lg:text-4xl flex-shrink-0"
           >
             <span className="text-[#E50914]">CINE</span>
             <span className="text-white">VIN</span>
           </Link>
           
-          <div className="hidden items-center gap-4 md:flex md:gap-6">
-            {navigation.main.map((item, index) => (
+          {/* Navigation - Hidden on mobile when search is open */}
+          <div className={`hidden lg:flex items-center gap-3 lg:gap-5 ${isSearchOpen ? 'hidden' : ''}`}>
+            {navigation.main.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-all duration-300 ${
+                className={`text-sm font-medium transition-all duration-300 whitespace-nowrap ${
                   pathname === item.href
                     ? 'text-white'
                     : 'text-[#b3b3b3] hover:text-white hover:scale-105'
                 }`}
-                style={{ animationDelay: `${index * 50}ms` }}
               >
                 {item.name}
               </Link>
@@ -59,6 +60,7 @@ export function Navbar() {
           </div>
         </div>
 
+        {/* Right side */}
         <div className="flex items-center gap-2 md:gap-4">
           <button
             onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -74,13 +76,14 @@ export function Navbar() {
         </div>
       </div>
 
+      {/* Search dropdown */}
       <div 
-        className={`overflow-hidden transition-all duration-300 ${
-          isSearchOpen ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
+        className={`overflow-visible transition-all duration-300 ${
+          isSearchOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <div className="border-t border-white/10 bg-black/95 p-4 backdrop-blur">
-          <div className="container-premium">
+          <div className="container-premium max-w-4xl mx-auto">
             <SearchBar onClose={() => setIsSearchOpen(false)} />
           </div>
         </div>

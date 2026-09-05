@@ -122,11 +122,13 @@ export const tmdbClient = {
     return fetchFromTMDB<any>('/genre/tv/list')
   },
 
-  discoverMovies: async (params: Record<string, string | number>) => {
+  // Single discoverMovies method
+  discoverMovies: async (params: Record<string, any>) => {
     return fetchFromTMDB<any>('/discover/movie', params)
   },
 
-  discoverTV: async (params: Record<string, string | number>) => {
+  // Single discoverTV method
+  discoverTV: async (params: Record<string, any>) => {
     return fetchFromTMDB<any>('/discover/tv', params)
   },
 }

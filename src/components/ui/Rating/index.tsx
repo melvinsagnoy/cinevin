@@ -1,18 +1,25 @@
-// src/components/ui/Rating/index.tsx
 interface RatingProps {
-  rating: number
+  rating: number | undefined | null
   maxRating?: number
   showValue?: boolean
   size?: 'sm' | 'md' | 'lg'
 }
 
 export function Rating({ rating, maxRating = 10, showValue = true, size = 'md' }: RatingProps) {
-  const percentage = (rating / maxRating) * 100
+  // Handle undefined, null, or invalid rating
+  const validRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0
+  const percentage = (validRating / maxRating) * 100
   
   const sizes = {
     sm: 'h-8 w-8 text-xs',
     md: 'h-10 w-10 text-sm',
     lg: 'h-12 w-12 text-base',
+  }
+  
+  function getRatingColor(rating: number): string {
+    if (rating >= 7) return '#22c55e'
+    if (rating >= 5) return '#eab308'
+    return '#ef4444'
   }
   
   return (
@@ -28,7 +35,7 @@ export function Rating({ rating, maxRating = 10, showValue = true, size = 'md' }
           <path
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
             fill="none"
-            stroke={getRatingColor(rating)}
+            stroke={getRatingColor(validRating)}
             strokeWidth="3"
             strokeDasharray={`${percentage}, 100`}
             strokeLinecap="round"
@@ -41,19 +48,13 @@ export function Rating({ rating, maxRating = 10, showValue = true, size = 'md' }
             className={`font-bold ${sizes[size]}`}
             fill="white"
           >
-            {rating.toFixed(1)}
+            {validRating.toFixed(1)}
           </text>
         </svg>
       </div>
       {showValue && (
-        <span className="text-sm text-zinc-400">/ {maxRating}</span>
+        <span className="text-sm text-[#808080]">/ {maxRating}</span>
       )}
     </div>
   )
-}
-
-function getRatingColor(rating: number): string {
-  if (rating >= 7) return '#22c55e' // green
-  if (rating >= 5) return '#eab308' // yellow
-  return '#ef4444' // red
 }

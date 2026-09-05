@@ -18,10 +18,19 @@ interface MediaCardProps {
 
 export function MediaCard({ item, size = 'medium', className, index = 0 }: MediaCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const posterUrl = item.posterPath ? getPosterUrl(item.posterPath, size === 'large' ? 'large' : 'medium') : null
-  const year = item.mediaType === 'movie' 
-    ? item.releaseDate ? formatYear(item.releaseDate) : null
-    : item.firstAirDate ? formatYear(item.firstAirDate) : null
+  
+  // Use direct TMDB URL as fallback
+  const posterUrl = item.posterPath 
+    ? `https://image.tmdb.org/t/p/${size === 'large' ? 'w500' : 'w342'}${item.posterPath}`
+    : null
+  
+  const year = item.releaseDate 
+    ? formatYear(item.releaseDate) 
+    : item.firstAirDate 
+      ? formatYear(item.firstAirDate) 
+      : null
+  
+  const title = item.title || 'Unknown Title'
   
   const sizes = {
     small: { width: 150, height: 225 },
@@ -46,12 +55,13 @@ export function MediaCard({ item, size = 'medium', className, index = 0 }: Media
           {posterUrl ? (
             <Image
               src={posterUrl}
-              alt={item.title}
+              alt={title}
               fill
               sizes={`${currentSize.width}px`}
               className="object-cover transition-transform duration-700 group-hover:scale-110"
               loading="lazy"
               quality={80}
+              unoptimized={!posterUrl.startsWith('https://image.tmdb.org')}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-[#1a1a1a]">
@@ -61,19 +71,19 @@ export function MediaCard({ item, size = 'medium', className, index = 0 }: Media
             </div>
           )}
           
-          {/* Hover overlay with fade */}
+          {/* Hover overlay */}
           <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`} />
           
-          {/* Top-right button with scale animation */}
+          {/* Top-right button */}
           <div className={`absolute right-2 top-2 transition-all duration-300 ${
             isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
           }`}>
             <MyListButton
               tmdbId={item.id}
               mediaType={item.mediaType}
-              title={item.title}
+              title={title}
               posterPath={item.posterPath}
               releaseYear={year ? parseInt(year) : undefined}
               size="sm"
@@ -89,19 +99,17 @@ export function MediaCard({ item, size = 'medium', className, index = 0 }: Media
         </div>
       </Link>
       
-      {/* Card info with slide-up */}
-      <div className={`mt-2 space-y-1 transition-all duration-300 ${
-        isHovered ? 'translate-y-0 opacity-100' : 'opacity-100'
-      }`}>
+      {/* Card info */}
+      <div className="mt-2 space-y-1">
         <Link
           href={item.mediaType === 'movie' ? `/movies/${item.id}` : `/tv/${item.id}`}
-          className="block text-sm font-medium text-white transition-colors duration-300 hover:text-[#E50914]"
+          className="block text-sm font-medium text-white transition-colors duration-300 hover:text-[#E50914] truncate"
         >
-          {item.title}
+          {title}
         </Link>
         <div className="flex items-center justify-between text-xs text-[#808080]">
           <span>{year || 'N/A'}</span>
-          <Rating rating={item.voteAverage} size="sm" showValue={false} />
+          <Rating rating={item.voteAverage || 0} size="sm" showValue={false} />
         </div>
       </div>
     </div>
