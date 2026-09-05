@@ -1,26 +1,324 @@
-@import "tailwindcss";
-
+/* Premium streaming platform theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-red: #E50914;
+  --primary-red-hover: #F6121D;
+  --primary-red-active: #C40812;
+  --bg-black: #000000;
+  --bg-dark: #141414;
+  --bg-darker: #0a0a0a;
+  --text-gray: #808080;
+  --text-light-gray: #b3b3b3;
+  --text-white: #ffffff;
+  --card-bg: #1a1a1a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--bg-black);
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-white);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-gray);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Focus outline */
+*:focus-visible {
+  outline: 2px solid var(--primary-red);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   PREMIUM ANIMATIONS
+   ============================================ */
+
+/* Page transitions - Fade In */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.fade-in-delay-1 { animation-delay: 0.1s; }
+.fade-in-delay-2 { animation-delay: 0.2s; }
+.fade-in-delay-3 { animation-delay: 0.3s; }
+.fade-in-delay-4 { animation-delay: 0.4s; }
+.fade-in-delay-5 { animation-delay: 0.5s; }
+
+/* Card hover zoom */
+.card-zoom {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease;
+}
+
+.card-zoom:hover {
+  transform: scale(1.05);
+  z-index: 10;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+}
+
+/* Hero fade in */
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hero-fade-in {
+  animation: heroFadeIn 0.8s ease-out forwards;
+}
+
+/* Content slide-up */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+/* Loading shimmer */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--card-bg) 0%,
+    #2a2a2a 50%,
+    var(--card-bg) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Scale in animation */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.4s ease-out forwards;
+}
+
+/* Button hover scale */
+.btn-scale {
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Smooth page transition */
+.page-transition {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Row scroll animation */
+@keyframes rowScroll {
+  from {
+    opacity: 0.5;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.row-enter {
+  animation: rowScroll 0.4s ease-out forwards;
+}
+
+/* Pulse animation for loading */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-lg {
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+.text-shadow-xl {
+  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+}
+
+/* Container */
+.container-premium {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-left: 4%;
+  padding-right: 4%;
+}
+
+@media (max-width: 640px) {
+  .container-premium {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+}
+
+/* Card hover */
+.premium-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.premium-card:hover {
+  transform: scale(1.05);
+  z-index: 10;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+/* Gradient overlays */
+.gradient-hero {
+  background: linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+}
+
+.gradient-bottom {
+  background: linear-gradient(to top, var(--bg-dark) 0%, transparent 100%);
+}
+
+.gradient-nav {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+}
+
+/* Badge styles */
+.badge-red {
+  background: var(--primary-red);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Episode item hover */
+.episode-item {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.episode-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  transform: translateX(4px);
+}
+
+/* Server button active state */
+.server-btn-active {
+  background: var(--primary-red);
+  color: white;
+}
+
+.server-btn-inactive {
+  background: var(--card-bg);
+  color: var(--text-light-gray);
+}
+
+.server-btn-inactive:hover {
+  background: #2a2a2a;
+  color: white;
+}
+
+/* Season selector */
+.season-btn {
+  transition: all 0.2s ease;
+}
+
+.season-btn-active {
+  background: var(--primary-red);
+  color: white;
+}
+
+.season-btn-inactive {
+  background: var(--card-bg);
+  color: var(--text-light-gray);
+}
+
+.season-btn-inactive:hover {
+  background: #2a2a2a;
+  color: white;
 }
