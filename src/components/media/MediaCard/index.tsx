@@ -48,7 +48,7 @@ export function MediaCard({ item, size = 'medium', className, index = 0 }: Media
       onMouseLeave={() => setIsHovered(false)}
     >
       <Link
-        href={item.mediaType === 'movie' ? `/movies/${item.id}` : `/tv/${item.id}`}
+        href={item.mediaType === 'movie' ? `/movies/${item.id}` : `/watch/tv/${item.id}`}
         className="block overflow-hidden rounded-md transition-all duration-300 card-zoom"
       >
         <div className="relative" style={{ aspectRatio: '2/3' }}>
@@ -102,7 +102,7 @@ export function MediaCard({ item, size = 'medium', className, index = 0 }: Media
       {/* Card info */}
       <div className="mt-2 space-y-1">
         <Link
-          href={item.mediaType === 'movie' ? `/movies/${item.id}` : `/tv/${item.id}`}
+          href={item.mediaType === 'movie' ? `/movies/${item.id}` : `/watch/tv/${item.id}`}
           className="block text-sm font-medium text-white transition-colors duration-300 hover:text-[#E50914] truncate"
         >
           {title}

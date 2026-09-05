@@ -99,7 +99,8 @@ export function EpisodesSection({ showId, seasons }: EpisodesSectionProps) {
                     <p className="text-sm text-[#808080]">{formatDate(episode.air_date)}</p>
                   )}
                 </div>
-                <Link href={`/watch/tv/${showId}?season=${currentSeason.season_number}&episode=${episode.episode_number}`}>
+                {/* Watch button - DIRECT to watch page */}
+                <Link href={`/tv/${showId}?season=${currentSeason.season_number}&episode=${episode.episode_number}`}>
                   <Button size="sm" className="bg-white text-black hover:bg-white/90">
                     <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />

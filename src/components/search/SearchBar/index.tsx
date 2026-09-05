@@ -109,11 +109,9 @@ export function SearchBar({
 
   const handleSelectSuggestion = (searchTerm: string) => {
     setQuery(searchTerm)
-    saveRecentSearch(searchTerm)
-    router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
-    if (onClose) onClose()
     setShowSuggestions(false)
     setShowRecent(false)
+    if (onClose) onClose()
   }
 
   const handleSelectRecent = (search: string) => {
@@ -219,7 +217,7 @@ export function SearchBar({
         </div>
       </form>
 
-      {/* Search Suggestions - Always render but control visibility */}
+      {/* Search Suggestions */}
       {showSuggestions && query.length >= 2 && (
         <SearchSuggestions
           query={query}

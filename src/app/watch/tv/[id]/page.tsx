@@ -159,7 +159,7 @@ export default async function TVDetailsPage({ params }: TVDetailsPageProps) {
               <p className="text-base text-[#b3b3b3] md:text-lg">{tv.overview}</p>
 
               <div className="flex flex-wrap gap-4">
-                <Link href={`/watch/tv/${tv.id}?season=1&episode=1`}>
+                <Link href={`/tv/${tv.id}?season=1&episode=1`}>
                   <Button size="lg" className="min-w-[140px] bg-white text-black hover:bg-white/90">
                     <svg className="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />

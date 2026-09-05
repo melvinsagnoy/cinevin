@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { getPosterUrl } from '@/lib/utils/helpers'
 
 interface Suggestion {
@@ -69,7 +70,8 @@ export function SearchSuggestions({ query, onSelect, onClose }: SearchSuggestion
           e.preventDefault()
           if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
             const selected = suggestions[selectedIndex]
-            handleSelect(selected.title)
+            // Navigate directly to details page
+            navigateToDetails(selected)
           }
           break
         case 'Escape':
@@ -82,10 +84,20 @@ export function SearchSuggestions({ query, onSelect, onClose }: SearchSuggestion
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [suggestions, selectedIndex, onClose])
 
-  const handleSelect = (title: string) => {
-    if (onSelect) onSelect(title)
+  // Navigate to details page
+  const navigateToDetails = (item: Suggestion) => {
     if (onClose) onClose()
-    router.push(`/search?q=${encodeURIComponent(title)}`)
+    if (item.mediaType === 'movie') {
+      router.push(`/movies/${item.id}`)
+    } else {
+      router.push(`/watch/tv/${item.id}`)
+    }
+  }
+
+  // Handle click on suggestion
+  const handleSelect = (item: Suggestion) => {
+    if (onSelect) onSelect(item.title)
+    navigateToDetails(item)
   }
 
   // Click outside to close
@@ -125,7 +137,8 @@ export function SearchSuggestions({ query, onSelect, onClose }: SearchSuggestion
           {suggestions.map((item, index) => (
             <button
               key={`${item.mediaType}-${item.id}`}
-              onClick={() => handleSelect(item.title)}
+              onClick={() => handleSelect(item)}
+              onMouseEnter={() => setSelectedIndex(index)}
               className={`flex w-full items-center gap-3 px-3 py-2 text-left transition ${
                 selectedIndex === index ? 'bg-[#2a2a2a]' : 'hover:bg-[#2a2a2a]'
               }`}
@@ -162,9 +175,9 @@ export function SearchSuggestions({ query, onSelect, onClose }: SearchSuggestion
                 </div>
               </div>
 
-              {/* Search icon */}
+              {/* Arrow icon to indicate navigation */}
               <svg className="h-4 w-4 text-[#808080] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           ))}
