@@ -1,8 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { tmdbClient } from '@/lib/tmdb/client'
 import { VideoPlayer } from '@/components/watch/VideoPlayer'
-import { Button } from '@/components/ui/Button'
 import { MyListButton } from '@/components/ui/MyListButton'
 import { Rating } from '@/components/ui/Rating'
 import { GenreBadge } from '@/components/ui/GenreBadge'
@@ -10,7 +10,6 @@ import { MediaRow } from '@/components/media/MediaRow'
 import { convertToMediaItem } from '@/lib/utils/converters'
 import { getPosterUrl, formatDate, formatRuntime } from '@/lib/utils/helpers'
 import { ArrowLeft } from 'lucide-react'
-import Image from 'next/image'
 
 interface WatchMoviePageProps {
   params: {
@@ -39,12 +38,12 @@ export default async function WatchMoviePage({ params }: WatchMoviePageProps) {
     const similarItems = similar.results.map(convertToMediaItem)
 
     return (
-      <div className="min-h-screen bg-[#141414]">
+      <div className="min-h-screen bg-cinevin-dark">
         {/* Back button */}
-        <div className="container-premium py-4">
+        <div className="container-cinevin py-4">
           <Link
             href={`/movies/${id}`}
-            className="inline-flex items-center gap-2 text-[#b3b3b3] hover:text-white transition"
+            className="inline-flex items-center gap-2 text-cinevin-text-muted transition hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
             Back to Movie
@@ -52,17 +51,27 @@ export default async function WatchMoviePage({ params }: WatchMoviePageProps) {
         </div>
 
         {/* Video Player */}
-        <div className="container-premium">
-          <VideoPlayer mediaType="movie" tmdbId={id} />
+        <div className="container-cinevin">
+          <VideoPlayer
+            mediaType="movie"
+            tmdbId={id}
+            title={movie.title}
+            posterPath={movie.poster_path}
+          />
         </div>
 
         {/* Movie Details */}
-        <div className="container-premium py-8">
+        <div className="container-cinevin py-8">
           <div className="grid gap-8 md:grid-cols-[240px,1fr]">
             {posterUrl && (
               <div className="hidden md:block">
                 <div className="relative aspect-[2/3] w-full max-w-[240px] overflow-hidden rounded-lg shadow-2xl">
-                  <Image src={posterUrl} alt={movie.title} fill className="object-cover" />
+                  <Image
+                    src={posterUrl}
+                    alt={movie.title}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
               </div>
             )}
@@ -72,7 +81,7 @@ export default async function WatchMoviePage({ params }: WatchMoviePageProps) {
                 {movie.title}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-3 text-sm text-[#b3b3b3]">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-cinevin-text-muted">
                 {movie.release_date && <span>{formatDate(movie.release_date)}</span>}
                 {movie.runtime && <span>• {formatRuntime(movie.runtime)}</span>}
                 <Rating rating={movie.vote_average} size="md" />
@@ -86,7 +95,9 @@ export default async function WatchMoviePage({ params }: WatchMoviePageProps) {
                 </div>
               )}
 
-              <p className="text-sm text-[#b3b3b3] md:text-base">{movie.overview}</p>
+              <p className="text-sm text-cinevin-text-muted md:text-base">
+                {movie.overview}
+              </p>
 
               <div className="flex flex-wrap gap-3 pt-2">
                 <MyListButton
@@ -94,25 +105,32 @@ export default async function WatchMoviePage({ params }: WatchMoviePageProps) {
                   mediaType="movie"
                   title={movie.title}
                   posterPath={movie.poster_path}
-                  releaseYear={movie.release_date ? new Date(movie.release_date).getFullYear() : undefined}
+                  releaseYear={
+                    movie.release_date
+                      ? new Date(movie.release_date).getFullYear()
+                      : undefined
+                  }
                 />
               </div>
 
-              {movie.production_companies && movie.production_companies.length > 0 && (
-                <div className="border-t border-white/5 pt-4">
-                  <p className="text-sm text-[#808080]">
-                    <span className="text-white">Production:</span>{' '}
-                    {movie.production_companies.map((c: any) => c.name).join(', ')}
-                  </p>
-                </div>
-              )}
+              {movie.production_companies &&
+                movie.production_companies.length > 0 && (
+                  <div className="border-t border-cinevin-border pt-4">
+                    <p className="text-sm text-cinevin-text-dim">
+                      <span className="text-white">Production:</span>{' '}
+                      {movie.production_companies
+                        .map((c: any) => c.name)
+                        .join(', ')}
+                    </p>
+                  </div>
+                )}
             </div>
           </div>
         </div>
 
         {/* Similar Movies */}
         {similarItems.length > 0 && (
-          <div className="container-premium pb-12">
+          <div className="container-cinevin pb-12">
             <MediaRow title="You might also like" items={similarItems} />
           </div>
         )}
@@ -121,22 +139,24 @@ export default async function WatchMoviePage({ params }: WatchMoviePageProps) {
   } catch (error) {
     console.error('Watch movie error:', error)
     return (
-      <div className="min-h-screen bg-[#141414] pt-16">
-        <div className="container-premium py-4">
+      <div className="min-h-screen bg-cinevin-dark pt-16">
+        <div className="container-cinevin py-4">
           <Link
             href={`/movies/${id}`}
-            className="inline-flex items-center gap-2 text-[#b3b3b3] hover:text-white transition"
+            className="inline-flex items-center gap-2 text-cinevin-text-muted transition hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
             Back to Movie
           </Link>
         </div>
-        <div className="container-premium">
+        <div className="container-cinevin">
           <div className="flex flex-col items-center justify-center py-16">
-            <p className="text-[#808080] mb-4">Failed to load movie. Please try again.</p>
+            <p className="mb-4 text-cinevin-text-dim">
+              Failed to load movie. Please try again.
+            </p>
             <Link
               href={`/watch/movie/${id}`}
-              className="bg-[#E50914] text-white px-4 py-2 rounded hover:bg-[#F6121D] transition"
+              className="rounded bg-cinevin-red px-4 py-2 text-white transition hover:bg-cinevin-red-hover"
             >
               Retry
             </Link>

@@ -3,6 +3,7 @@ export const navigation = {
     { name: 'Home', href: '/', icon: 'home' },
     { name: 'Movies', href: '/movies', icon: 'film' },
     { name: 'TV Shows', href: '/tv', icon: 'tv' },
+    { name: 'Genres', href: '/genres', icon: 'genres' },
     { name: 'New & Popular', href: '/new-popular', icon: 'trending' },
     { name: 'Browse by Languages', href: '/browse-languages', icon: 'languages' },
   ],

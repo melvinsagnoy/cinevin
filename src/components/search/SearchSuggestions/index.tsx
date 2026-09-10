@@ -90,7 +90,7 @@ export function SearchSuggestions({ query, onSelect, onClose }: SearchSuggestion
     if (item.mediaType === 'movie') {
       router.push(`/movies/${item.id}`)
     } else {
-      router.push(`/watch/tv/${item.id}`)
+      router.push(`/tv/${item.id}`)
     }
   }
 

@@ -112,7 +112,7 @@ export function Hero({ item, mediaType }: HeroProps) {
 
             {/* Buttons with scale animation */}
             <div className="flex flex-wrap gap-3 pt-2 fade-in-delay-5">
-              <Link href={mediaType === 'movie' ? `/watch/movie/${item.id}` : `/tv/${item.id}?season=1&episode=1`}>
+              <Link href={mediaType === 'movie' ? `/watch/movie/${item.id}` : `/watch/tv/${item.id}?season=1&episode=1`}>
                 <Button 
                   size="lg" 
                   className="min-w-[140px] bg-white text-black transition-all duration-300 hover:scale-105 hover:bg-white/90"

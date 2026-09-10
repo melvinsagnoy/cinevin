@@ -1,6 +1,7 @@
 import { tmdbClient } from '@/lib/tmdb/client'
 import { Hero } from '@/components/media/Hero'
 import { MediaRow } from '@/components/media/MediaRow'
+import { ContinueWatchingRow } from '@/components/home/ContinueWatchingRow'
 import { convertToMediaItem } from '@/lib/utils/converters'
 import { MediaItem } from '@/types/media'
 
@@ -31,15 +32,13 @@ export default async function HomePage() {
     const heroItem = trendingItems[0]
 
     return (
-      <div className="min-h-screen bg-[#141414] page-transition">
-        {heroItem && (
-          <Hero
-            item={heroItem}
-            mediaType={heroItem.mediaType}
-          />
-        )}
+      <div className="min-h-screen bg-cinevin-dark page-transition">
+        {heroItem && <Hero item={heroItem} mediaType={heroItem.mediaType} />}
 
-        <div className="container-premium space-y-8 pb-8">
+        <div className="space-y-10 pb-12 pt-8">
+          {/* Continue Watching — auto-hides when empty */}
+          <ContinueWatchingRow />
+
           <MediaRow
             title="Trending Now"
             items={trendingItems.slice(1)}
@@ -71,16 +70,22 @@ export default async function HomePage() {
   } catch (error) {
     console.error('HomePage error:', error)
     return (
-      <div className="min-h-screen bg-[#141414] flex items-center justify-center">
+      <div className="flex min-h-[70vh] items-center justify-center bg-cinevin-dark">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Unable to Load Content</h1>
-          <p className="text-[#808080] mb-4">Please check your connection and try again.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-[#E50914] text-white px-6 py-2 rounded transition-all duration-300 hover:scale-105 hover:bg-[#F6121D]"
-          >
-            Retry
-          </button>
+          <h1 className="mb-4 text-2xl font-bold text-white">
+            Unable to Load Content
+          </h1>
+          <p className="mb-4 text-cinevin-text-dim">
+            Please check your connection and try again.
+          </p>
+          <form action="/" method="GET">
+            <button
+              type="submit"
+              className="rounded bg-cinevin-red px-6 py-2 text-white transition hover:bg-cinevin-red-hover"
+            >
+              Retry
+            </button>
+          </form>
         </div>
       </div>
     )

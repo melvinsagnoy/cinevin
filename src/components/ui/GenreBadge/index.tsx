@@ -1,12 +1,26 @@
+import { cn } from '@/lib/utils/cn'
+
 interface GenreBadgeProps {
   name: string
   className?: string
+  variant?: 'default' | 'solid'
 }
 
-export function GenreBadge({ name, className }: GenreBadgeProps) {
+export function GenreBadge({
+  name,
+  className,
+  variant = 'default',
+}: GenreBadgeProps) {
   return (
     <span
-      className={`inline-block rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300 backdrop-blur ${className || ''}`}
+      className={cn(
+        'inline-flex items-center rounded-full text-xs font-medium transition',
+        variant === 'default' &&
+          'border border-cinevin-border bg-white/5 px-3 py-1 text-cinevin-text-muted backdrop-blur-sm',
+        variant === 'solid' &&
+          'bg-white/10 px-3 py-1 text-cinevin-text',
+        className
+      )}
     >
       {name}
     </span>

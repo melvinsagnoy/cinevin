@@ -1,25 +1,16 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
-import { formatDate } from '@/lib/utils/helpers'
-
-interface Episode {
-  id: number
-  episode_number: number
-  name: string
-  overview: string
-  still_path: string | null
-  air_date: string | null
-  runtime: number | null
-}
+import { useState, useEffect } from 'react'
+import { useWatchHistory } from '@/hooks/useWatchHistory'
+import { SeasonSelector } from '../SeasonSelector'
+import { EpisodeList } from '../EpisodeList'
+import { CardSkeleton } from '@/components/ui/Skeleton'
 
 interface Season {
   id: number
   season_number: number
-  episodes: Episode[]
+  name?: string
+  episode_count?: number
 }
 
 interface EpisodesSectionProps {
@@ -27,97 +18,121 @@ interface EpisodesSectionProps {
   seasons: Season[]
 }
 
-export function EpisodesSection({ showId, seasons }: EpisodesSectionProps) {
-  const [selectedSeasonIndex, setSelectedSeasonIndex] = useState(0)
-  
-  const currentSeason = seasons[selectedSeasonIndex]
+interface SeasonData {
+  episodes: any[]
+}
 
-  if (!currentSeason) return null
+export function EpisodesSection({ showId, seasons }: EpisodesSectionProps) {
+  // Start from Season 1 (or the first available season)
+  const initialSeason = seasons[0]?.season_number ?? 1
+  const [selectedSeason, setSelectedSeason] = useState<number>(initialSeason)
+  const [seasonData, setSeasonData] = useState<SeasonData | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const { history } = useWatchHistory()
+
+  // Compute watched episodes for current season
+  const watchedEpisodeNumbers = new Set<number>()
+  history
+    .filter(
+      (item) =>
+        item.mediaType === 'tv' &&
+        item.tmdbId === showId &&
+        item.season === selectedSeason
+    )
+    .forEach((item) => {
+      if (item.episode !== undefined) {
+        watchedEpisodeNumbers.add(item.episode)
+      }
+    })
+
+  // Fetch season data when selected season changes
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchSeason = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const res = await fetch(
+          `/api/tv/${showId}/season/${selectedSeason}`
+        )
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+        if (cancelled) return
+        setSeasonData({ episodes: data.episodes || [] })
+      } catch (err) {
+        if (cancelled) return
+        console.error('Failed to fetch season:', err)
+        setError('Failed to load episodes. Please try again.')
+      } finally {
+        if (cancelled) return
+        setIsLoading(false)
+      }
+    }
+
+    fetchSeason()
+    return () => {
+      cancelled = true
+    }
+  }, [showId, selectedSeason])
+
+  if (!seasons || seasons.length === 0) return null
 
   return (
-    <div className="container-premium py-8">
-      <h2 className="text-2xl font-bold text-white mb-6">Episodes</h2>
-      
-      {/* Season Tabs */}
-      <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
-        {seasons.map((season, index) => (
+    <div className="container-cinevin py-8">
+      <h2 className="mb-6 text-2xl font-bold text-white">Episodes</h2>
+
+      {/* Season selector */}
+      <SeasonSelector
+        seasons={seasons}
+        selectedSeason={selectedSeason}
+        onSelect={setSelectedSeason}
+        className="mb-6"
+      />
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex flex-col gap-4 rounded-lg border border-cinevin-border bg-cinevin-surface/50 p-4 sm:flex-row"
+            >
+              <div className="aspect-video w-full flex-shrink-0 animate-pulse rounded-md bg-cinevin-surface sm:w-56" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-3/4 animate-pulse rounded bg-cinevin-surface" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-cinevin-surface" />
+                <div className="h-3 w-full animate-pulse rounded bg-cinevin-surface" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Error */}
+      {error && !isLoading && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <p className="mb-4 text-cinevin-text-dim">{error}</p>
           <button
-            key={season.id}
-            onClick={() => setSelectedSeasonIndex(index)}
-            className={`px-6 py-2 text-sm font-medium rounded-full transition whitespace-nowrap ${
-              selectedSeasonIndex === index
-                ? 'bg-[#E50914] text-white'
-                : 'bg-[#1a1a1a] text-[#b3b3b3] hover:bg-[#2a2a2a] hover:text-white'
-            }`}
+            onClick={() => setSelectedSeason(selectedSeason)}
+            className="rounded bg-cinevin-red px-4 py-2 text-white transition hover:bg-cinevin-red-hover"
           >
-            Season {season.season_number}
+            Retry
           </button>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {/* Episodes Grid */}
-      <div className="space-y-6">
-        {currentSeason.episodes.map((episode) => (
-          <div
-            key={episode.id}
-            className="flex flex-col sm:flex-row gap-4 rounded-lg p-4 transition-all duration-300 hover:bg-[#1a1a1a]"
-          >
-            {/* Episode Thumbnail */}
-            <div className="relative w-full sm:w-64 h-36 flex-shrink-0 overflow-hidden rounded-lg bg-[#0a0a0a]">
-              {episode.still_path ? (
-                <Image
-                  src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
-                  alt={episode.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-[#808080]">
-                  <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                  </svg>
-                </div>
-              )}
-              <div className="absolute top-2 left-2 bg-black/80 backdrop-blur px-2 py-1 rounded text-xs font-medium text-white">
-                EP {episode.episode_number}
-              </div>
-              {episode.runtime && (
-                <div className="absolute bottom-2 right-2 bg-black/80 backdrop-blur px-2 py-1 rounded text-xs text-white">
-                  {episode.runtime}m
-                </div>
-              )}
-            </div>
-
-            {/* Episode Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-base font-semibold text-white hover:text-[#E50914] transition">
-                    {episode.name}
-                  </h3>
-                  {episode.air_date && (
-                    <p className="text-sm text-[#808080]">{formatDate(episode.air_date)}</p>
-                  )}
-                </div>
-                {/* Watch button - DIRECT to watch page */}
-                <Link href={`/tv/${showId}?season=${currentSeason.season_number}&episode=${episode.episode_number}`}>
-                  <Button size="sm" className="bg-white text-black hover:bg-white/90">
-                    <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                    Watch
-                  </Button>
-                </Link>
-              </div>
-              {episode.overview && (
-                <p className="mt-2 text-sm text-[#b3b3b3] line-clamp-3">
-                  {episode.overview}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Episode list */}
+      {!isLoading && !error && seasonData && (
+        <EpisodeList
+          showId={showId}
+          seasonNumber={selectedSeason}
+          episodes={seasonData.episodes}
+          watchedEpisodeNumbers={watchedEpisodeNumbers}
+        />
+      )}
     </div>
   )
 }

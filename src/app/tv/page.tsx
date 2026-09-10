@@ -1,45 +1,69 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { MediaCard } from '@/components/media/MediaCard'
 import { CardSkeleton } from '@/components/ui/Skeleton'
+import { Button } from '@/components/ui/Button'
 import { MediaItem } from '@/types/media'
 import { genres } from '@/config/navigation'
+
+const GENRE_OPTIONS = [{ id: '', name: 'All Genres' }, ...genres.tv]
+
+const SORT_OPTIONS = [
+  { value: 'popularity.desc', label: 'Popular' },
+  { value: 'vote_average.desc', label: 'Top Rated' },
+  { value: 'first_air_date.desc', label: 'Latest' },
+]
 
 export default function TVPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  const selectedGenre = searchParams.get('genre') || ''
+  const sortBy = searchParams.get('sort') || 'popularity.desc'
+
   const [shows, setShows] = useState<MediaItem[]>([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedGenre, setSelectedGenre] = useState<string>(searchParams.get('genre') || '')
-  const [sortBy, setSortBy] = useState<string>(searchParams.get('sort') || 'popularity.desc')
 
   useEffect(() => {
-    const fetchTVShows = async () => {
-      setIsLoading(true)
+    setShows([])
+    setPage(1)
+    setTotalPages(1)
+  }, [selectedGenre, sortBy])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchShows = async () => {
+      if (page === 1) setIsLoading(true)
+      else setIsLoadingMore(true)
       setError(null)
+
       try {
         const params = new URLSearchParams()
+        params.append('page', String(page))
         if (selectedGenre) params.append('genre', selectedGenre)
         if (sortBy) params.append('sort', sortBy)
-        
+
         const response = await fetch(`/api/tv/discover?${params.toString()}`)
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          throw new Error(`HTTP ${response.status}`)
         }
         const data = await response.json()
-        
-        // Map the data to MediaItem format - SAME AS MOVIES
-        const results = (data.results || []).map((item: any) => ({
+
+        const results: MediaItem[] = (data.results || []).map((item: any) => ({
           id: item.id,
           mediaType: 'tv' as const,
-          title: item.name || item.title || 'Unknown Title',
+          title: item.name || item.title || 'Unknown',
           overview: item.overview || '',
           posterPath: item.poster_path || null,
           backdropPath: item.backdrop_path || null,
-          releaseDate: item.first_air_date || '',
+          releaseDate: '',
           firstAirDate: item.first_air_date || '',
           voteAverage: item.vote_average || 0,
           voteCount: item.vote_count || 0,
@@ -47,92 +71,61 @@ export default function TVPage() {
           genres: item.genres || [],
           runtime: null,
         }))
-        
-        console.log('📺 TV Shows loaded:', results.length)
-        // Log first show to verify data
-        if (results.length > 0) {
-          console.log('📺 Sample TV show:', {
-            id: results[0].id,
-            title: results[0].title,
-            posterPath: results[0].posterPath,
-            voteAverage: results[0].voteAverage,
-          })
-        }
-        setShows(results)
-      } catch (error) {
-        console.error('Error fetching TV shows:', error)
+
+        if (cancelled) return
+        setShows(prev => (page === 1 ? results : [...prev, ...results]))
+        setTotalPages(data.total_pages || 1)
+      } catch (err) {
+        if (cancelled) return
+        console.error('TV fetch error:', err)
         setError('Failed to load TV shows. Please try again.')
       } finally {
+        if (cancelled) return
         setIsLoading(false)
+        setIsLoadingMore(false)
       }
     }
 
-    fetchTVShows()
-  }, [selectedGenre, sortBy])
+    fetchShows()
+    return () => {
+      cancelled = true
+    }
+  }, [page, selectedGenre, sortBy])
 
-  const handleGenreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value
-    setSelectedGenre(value)
-    router.push(`/tv?genre=${value}&sort=${sortBy}`)
+  const handleGenreChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) params.set('genre', value)
+    else params.delete('genre')
+    router.push(`/tv?${params.toString()}`)
   }
 
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value
-    setSortBy(value)
-    router.push(`/tv?genre=${selectedGenre}&sort=${value}`)
+  const handleSortChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('sort', value)
+    router.push(`/tv?${params.toString()}`)
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#141414] pt-16">
-        <div className="container-premium py-8">
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-3xl font-bold text-white">TV Shows</h1>
-            <div className="animate-pulse h-10 w-48 bg-[#1a1a1a] rounded" />
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <CardSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const handleLoadMore = useCallback(() => setPage(p => p + 1), [])
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#141414] pt-16">
-        <div className="container-premium py-8">
-          <h1 className="mb-8 text-3xl font-bold text-white">TV Shows</h1>
-          <div className="flex flex-col items-center justify-center py-16">
-            <p className="text-[#808080] mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-[#E50914] text-white px-4 py-2 rounded hover:bg-[#F6121D] transition"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const handleClearFilters = () => router.push('/tv')
+
+  const hasMore = page < totalPages
+  const hasActiveFilters = selectedGenre || sortBy !== 'popularity.desc'
 
   return (
-    <div className="min-h-screen bg-[#141414] pt-16">
-      <div className="container-premium py-8">
+    <div className="min-h-screen bg-cinevin-dark pt-16">
+      <div className="container-cinevin py-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold text-white">TV Shows</h1>
-          
+
           <div className="flex flex-wrap gap-2">
             <select
               value={selectedGenre}
-              onChange={handleGenreChange}
-              className="rounded bg-[#1a1a1a] px-4 py-2 text-sm text-[#b3b3b3] border border-white/10 focus:border-[#E50914] focus:outline-none"
+              onChange={(e) => handleGenreChange(e.target.value)}
+              className="rounded-md border border-cinevin-border bg-cinevin-surface px-4 py-2 text-sm text-cinevin-text-muted focus:border-cinevin-red focus:outline-none"
+              aria-label="Filter by genre"
             >
-              <option value="">All Genres</option>
-              {genres.tv.map((genre) => (
+              {GENRE_OPTIONS.map((genre) => (
                 <option key={genre.id} value={genre.id}>
                   {genre.name}
                 </option>
@@ -141,36 +134,78 @@ export default function TVPage() {
 
             <select
               value={sortBy}
-              onChange={handleSortChange}
-              className="rounded bg-[#1a1a1a] px-4 py-2 text-sm text-[#b3b3b3] border border-white/10 focus:border-[#E50914] focus:outline-none"
+              onChange={(e) => handleSortChange(e.target.value)}
+              className="rounded-md border border-cinevin-border bg-cinevin-surface px-4 py-2 text-sm text-cinevin-text-muted focus:border-cinevin-red focus:outline-none"
+              aria-label="Sort by"
             >
-              <option value="popularity.desc">Popular</option>
-              <option value="vote_average.desc">Top Rated</option>
-              <option value="first_air_date.desc">Latest</option>
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
+
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+                Clear
+              </Button>
+            )}
           </div>
         </div>
 
-        {shows.length === 0 ? (
+        {error && (
           <div className="flex flex-col items-center justify-center py-16">
-            <p className="text-[#808080]">No TV shows found matching your filters.</p>
-            <button
-              onClick={() => {
-                setSelectedGenre('')
-                setSortBy('popularity.desc')
-                router.push('/tv')
-              }}
-              className="mt-4 bg-[#E50914] text-white px-4 py-2 rounded hover:bg-[#F6121D] transition"
-            >
-              Clear Filters
-            </button>
+            <p className="mb-4 text-cinevin-text-dim">{error}</p>
+            <Button onClick={() => setPage(1)}>Retry</Button>
           </div>
-        ) : (
+        )}
+
+        {isLoading && !error && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {shows.map((show: MediaItem) => (
-              <MediaCard key={`tv-${show.id}`} item={show} />
+            {Array.from({ length: 18 }).map((_, i) => (
+              <CardSkeleton key={i} />
             ))}
           </div>
+        )}
+
+        {!isLoading && !error && shows.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <p className="text-cinevin-text-dim">
+              No TV shows found matching your filters.
+            </p>
+            <Button onClick={handleClearFilters} className="mt-4">
+              Clear Filters
+            </Button>
+          </div>
+        )}
+
+        {!error && shows.length > 0 && (
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {shows.map((show) => (
+                <MediaCard key={`tv-${show.id}`} item={show} />
+              ))}
+            </div>
+
+            {hasMore && (
+              <div className="mt-10 flex justify-center">
+                <Button
+                  onClick={handleLoadMore}
+                  loading={isLoadingMore}
+                  size="lg"
+                  className="min-w-[180px]"
+                >
+                  {isLoadingMore ? 'Loading…' : 'Load More'}
+                </Button>
+              </div>
+            )}
+
+            {!hasMore && (
+              <p className="mt-10 text-center text-sm text-cinevin-text-dim">
+                You've reached the end · {shows.length} TV shows
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

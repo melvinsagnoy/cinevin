@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { Search as SearchIcon, X } from 'lucide-react'
 import { useDebounce } from '@/hooks/useDebounce'
 import { Button } from '@/components/ui/Button'
 import { SearchSuggestions } from '../SearchSuggestions'
 
-// Local storage key for recent searches
 const RECENT_SEARCHES_KEY = 'cinevin_recent_searches'
 const MAX_RECENT_SEARCHES = 10
 
@@ -34,53 +34,46 @@ export function SearchBar({
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Load recent searches from localStorage
+  // Load recent searches
   useEffect(() => {
     try {
       const saved = localStorage.getItem(RECENT_SEARCHES_KEY)
-      if (saved) {
-        setRecentSearches(JSON.parse(saved))
-      }
-    } catch (e) {
-      console.error('Failed to load recent searches:', e)
-    }
+      if (saved) setRecentSearches(JSON.parse(saved))
+    } catch {}
   }, [])
 
-  // Save recent searches to localStorage
   const saveRecentSearch = (searchTerm: string) => {
     if (!searchTerm.trim() || searchTerm.trim().length < 2) return
-    
     const updated = [
       searchTerm.trim(),
-      ...recentSearches.filter(s => s.toLowerCase() !== searchTerm.trim().toLowerCase())
+      ...recentSearches.filter(
+        s => s.toLowerCase() !== searchTerm.trim().toLowerCase()
+      ),
     ].slice(0, MAX_RECENT_SEARCHES)
-    
     setRecentSearches(updated)
     try {
       localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated))
-    } catch (e) {
-      console.error('Failed to save recent searches:', e)
-    }
+    } catch {}
   }
 
   const clearRecentSearches = () => {
     setRecentSearches([])
     try {
       localStorage.removeItem(RECENT_SEARCHES_KEY)
-    } catch (e) {
-      console.error('Failed to clear recent searches:', e)
-    }
+    } catch {}
   }
 
   useEffect(() => {
-    if (debouncedQuery.length >= 2 && onSearch) {
-      onSearch(debouncedQuery)
-    }
+    if (debouncedQuery.length >= 2 && onSearch) onSearch(debouncedQuery)
   }, [debouncedQuery, onSearch])
 
+  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setShowRecent(false)
         setShowSuggestions(false)
       }
@@ -89,18 +82,20 @@ export function SearchBar({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Focus on mount
   useEffect(() => {
     if (autoFocus && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 100)
+      const timer = setTimeout(() => inputRef.current?.focus(), 150)
+      return () => clearTimeout(timer)
     }
   }, [autoFocus])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const trimmedQuery = query.trim()
-    if (trimmedQuery.length >= 2) {
-      saveRecentSearch(trimmedQuery)
-      router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`)
+    const trimmed = query.trim()
+    if (trimmed.length >= 2) {
+      saveRecentSearch(trimmed)
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`)
       if (onClose) onClose()
       setShowRecent(false)
       setShowSuggestions(false)
@@ -151,9 +146,7 @@ export function SearchBar({
   const handleClear = () => {
     setQuery('')
     setShowSuggestions(false)
-    if (inputRef.current) {
-      inputRef.current.focus()
-    }
+    inputRef.current?.focus()
   }
 
   const handleClose = () => {
@@ -163,22 +156,15 @@ export function SearchBar({
   }
 
   return (
-    <div ref={containerRef} className="relative w-full" style={{ zIndex: 9999 }}>
-      <form onSubmit={handleSubmit} className="relative">
-        <div className="relative flex items-center">
-          <svg
-            className="absolute left-3 h-5 w-5 text-[#808080]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
+    <div ref={containerRef} className="relative w-full">
+      <form onSubmit={handleSubmit}>
+        <div className="flex items-center gap-2 rounded-lg border border-cinevin-border bg-cinevin-surface p-1 transition-colors focus-within:border-cinevin-red">
+          {/* Search icon */}
+          <div className="pl-3 pr-1 text-cinevin-text-dim">
+            <SearchIcon className="h-4 w-4" />
+          </div>
+
+          {/* Input */}
           <input
             ref={inputRef}
             type="text"
@@ -186,38 +172,40 @@ export function SearchBar({
             onChange={handleInputChange}
             onFocus={handleFocus}
             placeholder={placeholder}
-            className="w-full rounded-md border border-white/10 bg-black/50 py-3 pl-10 pr-24 text-white placeholder-[#808080] focus:border-[#E50914] focus:outline-none focus:ring-1 focus:ring-[#E50914]/20 transition"
+            className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder-cinevin-text-dim focus:outline-none"
           />
-          <div className="absolute right-2 flex items-center gap-2">
-            {query && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="rounded-full p-1 text-[#808080] hover:text-white transition"
-                aria-label="Clear search"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-            {onClose && (
-              <button
-                type="button"
-                onClick={handleClose}
-                className="rounded px-3 py-1 text-sm text-[#808080] hover:text-white transition"
-              >
-                Cancel
-              </button>
-            )}
-            <Button type="submit" size="sm" className="hidden sm:inline-flex">
-              Search
-            </Button>
-          </div>
+
+          {/* Clear button */}
+          {query && (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label="Clear search"
+              className="rounded-full p-1 text-cinevin-text-dim transition hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          {/* Cancel */}
+          {onClose && (
+            <button
+              type="button"
+              onClick={handleClose}
+              className="rounded-md px-3 py-2 text-sm font-medium text-cinevin-text-muted transition hover:text-white"
+            >
+              Cancel
+            </button>
+          )}
+
+          {/* Search submit */}
+          <Button type="submit" size="sm" className="rounded-md">
+            Search
+          </Button>
         </div>
       </form>
 
-      {/* Search Suggestions */}
+      {/* Suggestions dropdown */}
       {showSuggestions && query.length >= 2 && (
         <SearchSuggestions
           query={query}
@@ -226,33 +214,31 @@ export function SearchBar({
         />
       )}
 
-      {/* Recent Searches Dropdown */}
+      {/* Recent searches dropdown */}
       {showRecent && recentSearches.length > 0 && query.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 rounded-md bg-[#1a1a1a] border border-white/10 shadow-xl z-[100] overflow-hidden">
-          <div className="p-2">
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-xs font-medium text-[#808080]">Recent Searches</span>
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-cinevin-border bg-cinevin-surface shadow-2xl shadow-black/60">
+          <div className="flex items-center justify-between border-b border-cinevin-border px-4 py-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-cinevin-text-dim">
+              Recent
+            </span>
+            <button
+              onClick={clearRecentSearches}
+              className="text-xs text-cinevin-text-dim transition hover:text-white"
+            >
+              Clear All
+            </button>
+          </div>
+          <div className="max-h-60 overflow-y-auto py-1">
+            {recentSearches.map((search, index) => (
               <button
-                onClick={clearRecentSearches}
-                className="text-xs text-[#808080] hover:text-white transition"
+                key={index}
+                onClick={() => handleSelectRecent(search)}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-cinevin-text-muted transition hover:bg-white/5 hover:text-white"
               >
-                Clear All
+                <SearchIcon className="h-3.5 w-3.5 text-cinevin-text-dim" />
+                {search}
               </button>
-            </div>
-            <div className="max-h-60 overflow-y-auto">
-              {recentSearches.map((search, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSelectRecent(search)}
-                  className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-[#b3b3b3] hover:bg-[#2a2a2a] hover:text-white rounded transition"
-                >
-                  <svg className="h-4 w-4 text-[#808080]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {search}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       )}

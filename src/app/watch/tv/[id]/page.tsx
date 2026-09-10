@@ -1,228 +1,273 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { tmdbClient } from '@/lib/tmdb/client'
-import { getBackdropUrl, getPosterUrl, formatDate, truncateText } from '@/lib/utils/helpers'
-import { Button } from '@/components/ui/Button'
-import { Rating } from '@/components/ui/Rating'
-import { GenreBadge } from '@/components/ui/GenreBadge'
+import { VideoPlayer } from '@/components/watch/VideoPlayer'
 import { MyListButton } from '@/components/ui/MyListButton'
-import { MediaRow } from '@/components/media/MediaRow'
-import { convertToMediaItem } from '@/lib/utils/converters'
-import { EpisodesSection } from '@/components/tv/EpisodesSection'
+import { Rating } from '@/components/ui/Rating'
+import { getPosterUrl } from '@/lib/utils/helpers'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 
-interface TVDetailsPageProps {
+interface WatchTVPageProps {
   params: {
     id: string
   }
-}
-
-export async function generateMetadata({ params }: TVDetailsPageProps) {
-  const id = parseInt(params.id)
-  if (isNaN(id)) return {}
-
-  try {
-    const tv = await tmdbClient.getTVDetails(id)
-    return {
-      title: `${tv.name} — Cinevin`,
-      description: tv.overview,
-      openGraph: {
-        title: tv.name,
-        description: tv.overview,
-        images: tv.poster_path
-          ? [`https://image.tmdb.org/t/p/w500${tv.poster_path}`]
-          : [],
-      },
-    }
-  } catch {
-    return {}
+  searchParams: {
+    season?: string
+    episode?: string
   }
 }
 
-export default async function TVDetailsPage({ params }: TVDetailsPageProps) {
+export default async function WatchTVPage({
+  params,
+  searchParams,
+}: WatchTVPageProps) {
   const id = parseInt(params.id)
+  const currentSeason = parseInt(searchParams.season || '1')
+  const currentEpisode = parseInt(searchParams.episode || '1')
+
   if (isNaN(id)) {
-    notFound()
+    redirect('/tv')
   }
 
   try {
-    const [tv, credits, similar] = await Promise.all([
+    const [show, seasonData] = await Promise.all([
       tmdbClient.getTVDetails(id),
-      tmdbClient.getTVCredits(id),
-      tmdbClient.getTVSimilar(id),
+      tmdbClient.getTVSeason(id, currentSeason),
     ])
 
-    // Fetch ALL seasons
-    const seasonsPromises = []
-    for (let i = 1; i <= tv.number_of_seasons; i++) {
-      seasonsPromises.push(
-        tmdbClient.getTVSeason(id, i).catch(() => null)
-      )
+    if (!show || !seasonData) {
+      notFound()
     }
-    const seasonsData = await Promise.all(seasonsPromises)
-    const validSeasons = seasonsData.filter((s): s is NonNullable<typeof s> => s !== null)
 
-    const backdropUrl = getBackdropUrl(tv.backdrop_path)
-    const posterUrl = getPosterUrl(tv.poster_path, 'large')
-    const cast = credits.cast.slice(0, 10)
-    const similarItems = similar.results.map(convertToMediaItem)
+    const posterUrl = getPosterUrl(show.poster_path, 'large')
+    const currentEpisodeData = seasonData.episodes?.find(
+      (e: any) => e.episode_number === currentEpisode
+    )
+
+    const totalEpisodes = seasonData.episodes?.length || 0
+
+    const getSeasonUrl = (seasonNum: number) =>
+      `/watch/tv/${id}?season=${seasonNum}&episode=1`
+
+    const getEpisodeUrl = (episodeNum: number) =>
+      `/watch/tv/${id}?season=${currentSeason}&episode=${episodeNum}`
+
+    const hasPrev = currentEpisode > 1 || currentSeason > 1
+    const hasNext =
+      currentEpisode < totalEpisodes || currentSeason < show.number_of_seasons
+
+    let prevUrl = '#'
+    if (currentEpisode > 1) {
+      prevUrl = getEpisodeUrl(currentEpisode - 1)
+    } else if (currentSeason > 1) {
+      prevUrl = getSeasonUrl(currentSeason - 1)
+    }
+
+    let nextUrl = '#'
+    if (currentEpisode < totalEpisodes) {
+      nextUrl = getEpisodeUrl(currentEpisode + 1)
+    } else if (currentSeason < show.number_of_seasons) {
+      nextUrl = getSeasonUrl(currentSeason + 1)
+    }
 
     return (
-      <div className="min-h-screen bg-[#141414] pt-16">
-        {/* Backdrop */}
-        <div className="relative h-[50vh] w-full overflow-hidden">
-          {backdropUrl ? (
-            <Image
-              src={backdropUrl}
-              alt={tv.name}
-              fill
-              className="object-cover"
-              priority
-            />
-          ) : (
-            <div className="h-full w-full bg-gradient-to-b from-zinc-800 to-zinc-900" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent" />
+      <div className="min-h-screen bg-cinevin-dark pb-12">
+        {/* Back to Show → /tv/{id} */}
+        <div className="container-cinevin py-4">
+          <Link
+            href={`/tv/${id}`}
+            className="inline-flex items-center gap-2 rounded-full bg-black/35 px-3 py-2 text-sm font-medium text-cinevin-text-muted backdrop-blur transition hover:bg-white/15 hover:text-white"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to Show
+          </Link>
         </div>
 
-        {/* Content */}
-        <div className="container-premium -mt-32 pb-8">
-          <div className="grid gap-8 md:grid-cols-[300px,1fr]">
-            {/* Poster */}
-            <div className="hidden md:block">
-              <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg shadow-2xl">
-                {posterUrl ? (
-                  <Image
-                    src={posterUrl}
-                    alt={tv.name}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-[#1a1a1a]">
-                    <svg className="h-20 w-20 text-[#808080]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Episode info bar */}
+        <div className="container-cinevin py-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-cinevin-border bg-cinevin-surface/75 px-4 py-3 shadow-2xl shadow-black/20 md:gap-x-4">
+            <h1 className="text-lg font-bold tracking-tight text-white md:text-2xl">
+              {show.name}
+            </h1>
+            <span className="text-sm text-cinevin-text-dim">•</span>
+            <span className="text-sm text-cinevin-text-muted">
+              S{currentSeason} E{currentEpisode}
+            </span>
+            {currentEpisodeData && (
+              <>
+                <span className="text-sm text-cinevin-text-dim">•</span>
+                <span className="text-sm text-cinevin-text-muted">
+                  {currentEpisodeData.name}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
 
-            {/* Details */}
-            <div className="space-y-6">
-              {/* Poster - Mobile */}
-              <div className="block md:hidden">
-                <div className="relative aspect-[2/3] w-32 overflow-hidden rounded-lg shadow-2xl">
-                  {posterUrl ? (
-                    <Image
-                      src={posterUrl}
-                      alt={tv.name}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-[#1a1a1a]">
-                      <svg className="h-12 w-12 text-[#808080]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              </div>
+        {/* Video Player */}
+        <div className="container-cinevin">
+          <VideoPlayer
+            mediaType="tv"
+            tmdbId={id}
+            season={currentSeason}
+            episode={currentEpisode}
+            title={show.name}
+            posterPath={show.poster_path}
+          />
+        </div>
 
-              <div>
-                <h1 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-                  {tv.name}
-                </h1>
-                {tv.tagline && (
-                  <p className="mt-2 text-lg text-[#b3b3b3]">{tv.tagline}</p>
-                )}
-              </div>
+        {/* Prev / Next */}
+        <div className="container-cinevin py-4">
+          <div className="flex items-center justify-between gap-4">
+            <Link
+              href={prevUrl}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-cinevin-text-muted transition hover:bg-white/10 hover:text-white ${
+                !hasPrev && 'pointer-events-none opacity-50'
+              }`}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Link>
 
-              <div className="flex flex-wrap items-center gap-3 text-sm text-[#b3b3b3]">
-                {tv.first_air_date && <span>{formatDate(tv.first_air_date)}</span>}
-                <span>• {tv.number_of_seasons} Seasons</span>
-                <span className="text-[#808080]">HD</span>
-                <Rating rating={tv.vote_average} size="md" />
-              </div>
+            <span className="hidden text-sm text-cinevin-text-muted sm:block">
+              {currentEpisodeData?.name || `Episode ${currentEpisode}`}
+            </span>
+            <span className="text-sm text-cinevin-text-muted sm:hidden">
+              S{currentSeason} E{currentEpisode}
+            </span>
 
-              {tv.genres.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {tv.genres.map((genre: any) => (
-                    <GenreBadge key={genre.id} name={genre.name} />
-                  ))}
-                </div>
-              )}
+            <Link
+              href={nextUrl}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-cinevin-text-muted transition hover:bg-white/10 hover:text-white ${
+                !hasNext && 'pointer-events-none opacity-50'
+              }`}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
 
-              <p className="text-base text-[#b3b3b3] md:text-lg">{tv.overview}</p>
-
-              <div className="flex flex-wrap gap-4">
-                <Link href={`/tv/${tv.id}?season=1&episode=1`}>
-                  <Button size="lg" className="min-w-[140px] bg-white text-black hover:bg-white/90">
-                    <svg className="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                    Play
-                  </Button>
-                </Link>
-                
-                <MyListButton
-                  tmdbId={tv.id}
-                  mediaType="tv"
-                  title={tv.name}
-                  posterPath={tv.poster_path}
-                  releaseYear={tv.first_air_date ? new Date(tv.first_air_date).getFullYear() : undefined}
-                  size="lg"
+        {/* Show mini-block */}
+        <div className="container-cinevin border-t border-cinevin-border py-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {posterUrl && (
+              <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-md shadow-lg">
+                <Image
+                  src={posterUrl}
+                  alt={show.name}
+                  fill
+                  className="object-cover"
                 />
               </div>
-
-              {cast.length > 0 && (
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold text-white">Cast</h3>
-                  <div className="flex flex-wrap gap-4">
-                    {cast.map((actor: any) => (
-                      <div key={actor.id} className="text-center">
-                        <div className="relative h-16 w-16 overflow-hidden rounded-full bg-[#1a1a1a]">
-                          {actor.profile_path ? (
-                            <Image
-                              src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
-                              alt={actor.name}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-2xl text-[#808080]">
-                              {actor.name.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <p className="mt-1 text-xs text-white">{actor.name}</p>
-                        <p className="text-xs text-[#808080]">{actor.character}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            )}
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-base font-bold text-white">
+                {show.name}
+              </h2>
+              <p className="text-xs text-cinevin-text-dim">
+                {show.number_of_seasons} Seasons
+              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <Rating rating={show.vote_average} size="sm" />
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <MyListButton
+                tmdbId={show.id}
+                mediaType="tv"
+                title={show.name}
+                posterPath={show.poster_path}
+                releaseYear={
+                  show.first_air_date
+                    ? new Date(show.first_air_date).getFullYear()
+                    : undefined
+                }
+                size="sm"
+              />
             </div>
           </div>
         </div>
 
-        {/* Episodes Section - Now interactive */}
-        {validSeasons.length > 0 && (
-          <EpisodesSection showId={tv.id} seasons={validSeasons} />
-        )}
-
-        {/* Similar Shows */}
-        {similarItems.length > 0 && (
-          <div className="container-premium pb-12">
-            <MediaRow title="More Like This" items={similarItems} />
+        {/* Season selector */}
+        <div className="container-cinevin pt-4">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-cinevin-text-muted">
+            Season
+          </p>
+          <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-2">
+            {Array.from(
+              { length: show.number_of_seasons },
+              (_, index) => index + 1
+            ).map((seasonNumber) => (
+              <Link
+                key={seasonNumber}
+                href={getSeasonUrl(seasonNumber)}
+                className={`shrink-0 rounded-md px-4 py-2 text-sm font-semibold transition ${
+                  currentSeason === seasonNumber
+                    ? 'bg-cinevin-red text-white'
+                    : 'bg-cinevin-surface text-cinevin-text-muted hover:bg-cinevin-surface-hover hover:text-white'
+                }`}
+              >
+                Season {seasonNumber}
+              </Link>
+            ))}
           </div>
-        )}
+        </div>
+
+        {/* Jump to episode */}
+        <div className="container-cinevin py-4">
+          <details className="cursor-pointer">
+            <summary className="text-sm font-bold uppercase tracking-[0.12em] text-cinevin-text-muted transition hover:text-white">
+              Jump to Episode ▼
+            </summary>
+            <div className="mt-4 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto rounded-lg bg-black/30 p-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              {seasonData.episodes.map((ep: any) => (
+                <Link
+                  key={ep.id}
+                  href={getEpisodeUrl(ep.episode_number)}
+                  className={`rounded px-3 py-2 text-center text-sm transition ${
+                    currentEpisode === ep.episode_number
+                      ? 'bg-cinevin-red text-white'
+                      : 'bg-cinevin-dark text-cinevin-text-muted hover:bg-cinevin-surface-hover hover:text-white'
+                  }`}
+                >
+                  <div className="font-medium">E{ep.episode_number}</div>
+                  <div className="truncate text-xs">{ep.name}</div>
+                </Link>
+              ))}
+            </div>
+          </details>
+        </div>
       </div>
     )
-  } catch {
-    notFound()
+  } catch (error) {
+    console.error('Watch TV page error:', error)
+    return (
+      <div className="min-h-screen bg-cinevin-dark pt-16">
+        <div className="container-cinevin py-4">
+          <Link
+            href={`/tv/${id}`}
+            className="inline-flex items-center gap-2 rounded-full bg-black/35 px-3 py-2 text-sm font-medium text-cinevin-text-muted backdrop-blur transition hover:bg-white/15 hover:text-white"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to Show
+          </Link>
+        </div>
+        <div className="container-cinevin">
+          <div className="flex flex-col items-center justify-center py-16">
+            <p className="mb-4 text-cinevin-text-dim">
+              Failed to load episode. Please try again.
+            </p>
+            <Link
+              href={`/watch/tv/${id}?season=${currentSeason}&episode=${currentEpisode}`}
+              className="rounded bg-cinevin-red px-4 py-2 text-white transition hover:bg-cinevin-red-hover"
+            >
+              Retry
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 }
