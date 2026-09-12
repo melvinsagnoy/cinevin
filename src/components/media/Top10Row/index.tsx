@@ -4,24 +4,24 @@ import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { MediaItem } from '@/types/media'
-import { MediaCard } from '../MediaCard'
+import { Top10Card } from '../Top10Card'
 import { cn } from '@/lib/utils/cn'
 
-interface MediaRowProps {
+interface Top10RowProps {
   title: string
   items: MediaItem[]
   seeAllLink?: string
+  showRecentlyAdded?: boolean
   className?: string
-  loading?: boolean
 }
 
-export function MediaRow({
+export function Top10Row({
   title,
   items,
   seeAllLink,
+  showRecentlyAdded = true,
   className,
-  loading,
-}: MediaRowProps) {
+}: Top10RowProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -50,28 +50,11 @@ export function MediaRow({
     return () => el.removeEventListener('scroll', checkScroll)
   }, [items])
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="container-cinevin">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
-        </div>
-        <div className="flex gap-4 overflow-hidden px-4 md:px-[4%]">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-[2/3] w-[160px] flex-none animate-pulse rounded-md bg-cinevin-surface md:w-[200px]"
-            />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (items.length === 0) return null
+  const top10 = items.slice(0, 10)
+  if (top10.length === 0) return null
 
   return (
-    <section className={cn('relative space-y-4', className)}>
+    <section className={cn('space-y-4', className)}>
       <div className="container-cinevin flex items-center justify-between">
         <h2 className="text-xl font-bold text-white md:text-2xl">{title}</h2>
         {seeAllLink && (
@@ -85,7 +68,6 @@ export function MediaRow({
       </div>
 
       <div className="group/row relative">
-        {/* Left scroll button */}
         <button
           onClick={() => scroll('left')}
           className={cn(
@@ -99,27 +81,25 @@ export function MediaRow({
           <ChevronLeft className="h-6 w-6" />
         </button>
 
-        {/* 
-          IMPORTANT: 
-          - `overflow-x-auto` for horizontal scrolling
-          - `overflow-y-visible` would clip, so we can't have it
-          - Instead: extra padding-y gives the hover panel room to expand
+        {/*
+          Overflow-x-auto for horizontal scroll.
+          Left padding gives the rank numbers room.
+          Right padding creates gap.
         */}
         <div
           ref={scrollRef}
-          className="scrollbar-hide flex gap-3 overflow-x-auto overflow-y-visible px-4 py-8 md:px-[4%]"
+          className="scrollbar-hide flex gap-4 overflow-x-auto px-4 py-6 md:px-[4%]"
         >
-          {items.map((item, index) => (
-            <div
+          {top10.map((item, index) => (
+            <Top10Card
               key={`${item.mediaType}-${item.id}`}
-              className="w-[160px] flex-none md:w-[200px]"
-            >
-              <MediaCard item={item} size="medium" index={index} />
-            </div>
+              item={item}
+              rank={index + 1}
+              isRecentlyAdded={showRecentlyAdded}
+            />
           ))}
         </div>
 
-        {/* Right scroll button */}
         <button
           onClick={() => scroll('right')}
           className={cn(

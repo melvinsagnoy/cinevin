@@ -50,7 +50,7 @@ export function ContinueWatchingRow() {
           {items.map(item => (
             <div
               key={`${item.mediaType}-${item.tmdbId}-${item.season ?? 0}-${item.episode ?? 0}`}
-              className="w-[160px] flex-none md:w-[200px]"
+              className="w-[280px] flex-none md:w-[320px]"
             >
               <ContinueWatchingCard item={item} />
             </div>

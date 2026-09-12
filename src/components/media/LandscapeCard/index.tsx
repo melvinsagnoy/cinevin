@@ -12,31 +12,27 @@ import {
   Volume2,
 } from 'lucide-react'
 import { MediaItem } from '@/types/media'
-import {
-  getPosterUrl,
-  getBackdropUrl,
-  formatYear,
-  formatRuntime,
-} from '@/lib/utils/helpers'
-import { Rating } from '@/components/ui/Rating'
+import { getBackdropUrl, getPosterUrl } from '@/lib/utils/helpers'
 import { useMyList } from '@/hooks/useMyList'
 import { cn } from '@/lib/utils/cn'
 
-interface MediaCardProps {
+interface LandscapeCardProps {
   item: MediaItem
-  size?: 'small' | 'medium' | 'large'
+  isRecentlyAdded?: boolean
+  isTopTen?: boolean
+  hasNewEpisode?: boolean
   className?: string
-  index?: number
 }
 
 type PanelAlign = 'left' | 'center' | 'right'
 
-export function MediaCard({
+export function LandscapeCard({
   item,
-  size = 'medium',
+  isRecentlyAdded = false,
+  isTopTen = false,
+  hasNewEpisode = false,
   className,
-  index = 0,
-}: MediaCardProps) {
+}: LandscapeCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [panelAlign, setPanelAlign] = useState<PanelAlign>('center')
   const hoverTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -44,22 +40,9 @@ export function MediaCard({
   const cardRef = useRef<HTMLDivElement>(null)
   const { isInList, toggle } = useMyList()
 
-  const posterUrl = item.posterPath
-    ? `https://image.tmdb.org/t/p/${size === 'large' ? 'w500' : 'w342'}${item.posterPath}`
-    : null
-
-  const backdropUrl = item.backdropPath
+  const imageUrl = item.backdropPath
     ? getBackdropUrl(item.backdropPath, 'medium')
-    : null
-
-  const year = item.releaseDate
-    ? formatYear(item.releaseDate)
-    : item.firstAirDate
-    ? formatYear(item.firstAirDate)
-    : null
-
-  const title = item.title || 'Unknown Title'
-  const inList = isInList(item.id, item.mediaType)
+    : getPosterUrl(item.posterPath, 'large')
 
   const detailsHref =
     item.mediaType === 'movie' ? `/movies/${item.id}` : `/tv/${item.id}`
@@ -69,18 +52,17 @@ export function MediaCard({
       ? `/watch/movie/${item.id}`
       : `/watch/tv/${item.id}?season=1&episode=1`
 
-  // Determine panel alignment based on card position in viewport
+  const inList = isInList(item.id, item.mediaType)
+
+  // Detect whether the panel would overflow the viewport
   const detectAlignment = useCallback(() => {
     if (!cardRef.current) return
     const rect = cardRef.current.getBoundingClientRect()
     const viewportWidth = window.innerWidth
-    const panelWidth = 340
+    const panelWidth = 380
     const panelHalf = panelWidth / 2
-
-    // Card's center X
     const cardCenterX = rect.left + rect.width / 2
 
-    // Would the centered panel go off-screen?
     if (cardCenterX - panelHalf < 16) {
       setPanelAlign('left')
     } else if (cardCenterX + panelHalf > viewportWidth - 16) {
@@ -119,11 +101,9 @@ export function MediaCard({
       mediaType: item.mediaType,
       title: item.title,
       posterPath: item.posterPath,
-      releaseYear: year ? parseInt(year) : undefined,
     })
   }
 
-  // Position classes based on alignment
   const panelPositionClass =
     panelAlign === 'left'
       ? 'left-0'
@@ -135,84 +115,86 @@ export function MediaCard({
     <div
       ref={cardRef}
       className={cn(
-        'hover-card-wrapper relative fade-in',
+        'hover-card-wrapper relative',
         isHovered && 'is-hovered',
         className
       )}
-      style={{ animationDelay: `${index * 40}ms` }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Default card */}
+      {/* Default landscape card */}
       <Link
         href={detailsHref}
-        className="block overflow-hidden rounded-md"
+        className="relative block overflow-hidden rounded-md"
         aria-hidden={isHovered}
       >
-        <div className="relative" style={{ aspectRatio: '2/3' }}>
-          {posterUrl ? (
+        <div className="relative aspect-video w-full bg-cinevin-surface">
+          {imageUrl ? (
             <Image
-              src={posterUrl}
-              alt={title}
+              src={imageUrl}
+              alt={item.title}
               fill
-              sizes="200px"
+              sizes="320px"
               className="object-cover"
               loading="lazy"
               quality={80}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-cinevin-surface">
-              <svg
-                className="h-12 w-12 text-cinevin-text-dim"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
-                />
-              </svg>
+              <span className="text-cinevin-text-dim text-xs">No image</span>
             </div>
           )}
+
+          {isTopTen && (
+            <div className="absolute left-2 top-2 z-10 flex flex-col items-center gap-0.5 rounded-sm bg-cinevin-red px-1.5 py-1 text-[9px] font-black leading-none text-white">
+              <span>TOP</span>
+              <span>10</span>
+            </div>
+          )}
+
+          {hasNewEpisode && (
+                <div className="absolute bottom-0 left-1/2 z-10 flex -translate-x-1/2 gap-1">
+                    <span className="rounded-t-sm bg-cinevin-red px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white shadow-lg">
+                    New Episode
+                    </span>
+                    <span className="rounded-t-sm bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-black shadow-lg">
+                    Watch Now
+                    </span>
+                </div>
+                )}
+
+                {isRecentlyAdded && !hasNewEpisode && (
+                <div className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 rounded-t-sm bg-cinevin-red px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+                    Recently Added
+                </div>
+                )}
         </div>
       </Link>
 
-      {/* Hover panel — Netflix style, centered by default */}
+      {/* Hover panel — centered above the card, floats outward */}
       {isHovered && (
         <div
           className={cn(
             'hover-card-panel absolute top-0',
             panelPositionClass
           )}
-          style={{ width: '340px' }}
+          style={{ width: '380px' }}
         >
           {/* Landscape image */}
           <Link href={detailsHref} className="block">
             <div className="relative aspect-video w-full bg-cinevin-surface">
-              {backdropUrl ? (
+              {imageUrl ? (
                 <Image
-                  src={backdropUrl}
-                  alt={title}
+                  src={imageUrl}
+                  alt={item.title}
                   fill
-                  sizes="340px"
-                  className="object-cover"
-                  quality={85}
-                />
-              ) : posterUrl ? (
-                <Image
-                  src={posterUrl}
-                  alt={title}
-                  fill
-                  sizes="340px"
+                  sizes="380px"
                   className="object-cover"
                   quality={85}
                 />
               ) : null}
 
-              {/* Red C logo top-left */}
+              {/* C logo top-left */}
               <div className="absolute left-3 top-3 text-2xl font-black text-cinevin-red drop-shadow-lg">
                 C
               </div>
@@ -229,7 +211,6 @@ export function MediaCard({
 
           {/* Info & Buttons */}
           <div className="space-y-3 bg-[#141414] p-4">
-            {/* Action row */}
             <div className="flex items-center gap-2">
               <Link
                 href={watchHref}
@@ -272,32 +253,8 @@ export function MediaCard({
               </Link>
             </div>
 
-            {/* Episode info (TV) */}
-            {item.mediaType === 'tv' && (
-              <p className="text-xs text-white/90">
-                <span className="font-semibold">S1:E1</span>{' '}
-                <span className="text-white/70">"Episode 1"</span>
-              </p>
-            )}
-
-            {/* Metadata */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="rounded border border-white/40 px-1.5 py-0.5 font-semibold text-white/90">
-                13+
-              </span>
-              {year && (
-                <span className="font-semibold text-white/90">{year}</span>
-              )}
-              {item.mediaType === 'movie' && item.runtime && (
-                <span className="font-semibold text-white/90">
-                  {formatRuntime(item.runtime)}
-                </span>
-              )}
-              <Rating rating={item.voteAverage} size="sm" showValue={false} />
-            </div>
-
             {/* Title */}
-            <p className="text-sm font-semibold text-white">{title}</p>
+            <p className="text-sm font-semibold text-white">{item.title}</p>
 
             {/* Genres */}
             {item.genres && item.genres.length > 0 && (

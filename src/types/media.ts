@@ -17,6 +17,7 @@ export interface MediaItem {
   popularity: number
   genres: { id: number; name: string }[]
   runtime?: number | null
+  tagline?: string | null   
 }
 
 export interface Movie extends MediaItem {
@@ -29,6 +30,7 @@ export interface Movie extends MediaItem {
   budget: number
   revenue: number
   productionCompanies: { id: number; name: string }[]
+  
 }
 
 export interface TVShow extends MediaItem {
@@ -79,6 +81,7 @@ export interface WatchHistoryItem {
   tmdbId: number
   title: string
   posterPath: string | null
+  backdropPath?: string | null   // ← add this
   season?: number
   episode?: number
   lastWatched: string // ISO date string

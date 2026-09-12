@@ -360,3 +360,58 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+/* ============================================
+   NETFLIX-STYLE HOVER CARD
+   ============================================ */
+
+.hover-card-wrapper {
+  position: relative;
+  transition: transform 0.25s ease-out;
+  transform-origin: center center;
+}
+
+.hover-card-wrapper.is-hovered {
+  z-index: 50;
+}
+
+.hover-card-panel {
+  background: #141414;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+  transform-origin: center top;
+  animation: hover-card-in 0.25s ease-out forwards;
+  z-index: 60;
+}
+
+@keyframes hover-card-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* Prevent scrollbar flash on hover */
+.hover-card-wrapper:hover {
+  z-index: 50;
+}

@@ -4,24 +4,28 @@ import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { MediaItem } from '@/types/media'
-import { MediaCard } from '../MediaCard'
+import { LandscapeCard } from '../LandscapeCard'
 import { cn } from '@/lib/utils/cn'
 
-interface MediaRowProps {
+interface LandscapeRowProps {
   title: string
   items: MediaItem[]
   seeAllLink?: string
+  /** Show "Recently Added" badge on all cards */
+  showRecentlyAdded?: boolean
+  /** Show "TOP 10" small badge on all cards */
+  showTopTen?: boolean
   className?: string
-  loading?: boolean
 }
 
-export function MediaRow({
+export function LandscapeRow({
   title,
   items,
   seeAllLink,
+  showRecentlyAdded = true,
+  showTopTen = false,
   className,
-  loading,
-}: MediaRowProps) {
+}: LandscapeRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -50,28 +54,11 @@ export function MediaRow({
     return () => el.removeEventListener('scroll', checkScroll)
   }, [items])
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="container-cinevin">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
-        </div>
-        <div className="flex gap-4 overflow-hidden px-4 md:px-[4%]">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-[2/3] w-[160px] flex-none animate-pulse rounded-md bg-cinevin-surface md:w-[200px]"
-            />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
   if (items.length === 0) return null
 
   return (
-    <section className={cn('relative space-y-4', className)}>
+    <section className={cn('space-y-4', className)}>
+      {/* Header */}
       <div className="container-cinevin flex items-center justify-between">
         <h2 className="text-xl font-bold text-white md:text-2xl">{title}</h2>
         {seeAllLink && (
@@ -84,14 +71,14 @@ export function MediaRow({
         )}
       </div>
 
-      <div className="group/row relative">
-        {/* Left scroll button */}
+      {/* Row */}
+      <div className="group relative">
         <button
           onClick={() => scroll('left')}
           className={cn(
-            'absolute left-0 top-1/2 z-30 hidden -translate-y-1/2 rounded-r-lg bg-black/70 p-2 text-white backdrop-blur-sm transition md:block',
+            'absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-r-lg bg-black/70 p-2 text-white backdrop-blur-sm transition md:block',
             canScrollLeft
-              ? 'opacity-0 group-hover/row:opacity-100'
+              ? 'opacity-0 group-hover:opacity-100'
               : 'pointer-events-none opacity-0'
           )}
           aria-label="Scroll left"
@@ -99,33 +86,30 @@ export function MediaRow({
           <ChevronLeft className="h-6 w-6" />
         </button>
 
-        {/* 
-          IMPORTANT: 
-          - `overflow-x-auto` for horizontal scrolling
-          - `overflow-y-visible` would clip, so we can't have it
-          - Instead: extra padding-y gives the hover panel room to expand
-        */}
         <div
           ref={scrollRef}
-          className="scrollbar-hide flex gap-3 overflow-x-auto overflow-y-visible px-4 py-8 md:px-[4%]"
+          className="scrollbar-hide flex gap-3 overflow-x-auto px-4 pb-2 md:px-[4%]"
         >
-          {items.map((item, index) => (
+          {items.map((item) => (
             <div
               key={`${item.mediaType}-${item.id}`}
-              className="w-[160px] flex-none md:w-[200px]"
+              className="w-[280px] flex-none md:w-[320px]"
             >
-              <MediaCard item={item} size="medium" index={index} />
+              <LandscapeCard
+                item={item}
+                isRecentlyAdded={showRecentlyAdded}
+                isTopTen={showTopTen}
+              />
             </div>
           ))}
         </div>
 
-        {/* Right scroll button */}
         <button
           onClick={() => scroll('right')}
           className={cn(
-            'absolute right-0 top-1/2 z-30 hidden -translate-y-1/2 rounded-l-lg bg-black/70 p-2 text-white backdrop-blur-sm transition md:block',
+            'absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-l-lg bg-black/70 p-2 text-white backdrop-blur-sm transition md:block',
             canScrollRight
-              ? 'opacity-0 group-hover/row:opacity-100'
+              ? 'opacity-0 group-hover:opacity-100'
               : 'pointer-events-none opacity-0'
           )}
           aria-label="Scroll right"
